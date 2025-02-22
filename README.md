@@ -1,5 +1,6 @@
 # angel-momentom
-노마드코더 JS challange 프로그램을 활용한 toy project
+브라우저 시작페이지로 지정하고, 나만의 대쉬보드로 활용하는 페이지
+모든 정보는 사용자의 브라우저에만 저장됩니다.
 
 features
 1. 30days challange board.
