@@ -10,8 +10,8 @@ function onGeoSuccess(position) {
     
     const serviceKey = 'bd8617a96c9fb01ca5def927dbd4a161';
 
-    const air_pollutionUrl= `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${serviceKey}&units=matric`;
-    const curWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${serviceKey}&units=matric`;
+    const air_pollutionUrl= `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${serviceKey}&units=metric`;
+    const curWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${serviceKey}&units=metric`;
     
     getDataWeatherAPIcall(curWeatherUrl,air_pollutionUrl)
 
