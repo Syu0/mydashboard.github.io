@@ -24,6 +24,7 @@ function onGeoError(){
 }
 
 function getDataWeatherAPIcall(curWeatherUrl, air_pollutionUrl){
+        if (!geolocaDiv) return;
     
     console.log(curWeatherUrl);
     console.log(air_pollutionUrl);
@@ -47,7 +48,9 @@ function getDataWeatherAPIcall(curWeatherUrl, air_pollutionUrl){
     }).catch(e=>console.log(e));
 }
 
-navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError);
+if (geolocaDiv) {
+        navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError);
+}
 
  
 
