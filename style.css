@@ -481,6 +481,10 @@ li button {
         font-weight: 300;
 }
 
+#FavoriteForm.hidden {
+                display: none;
+}
+
 #FavoriteForm {
         max-width: 280px;
         margin: 18px auto 0;
