@@ -44,16 +44,26 @@
             <form id=TodosForm>
                 <input type="text" class="title" required=true placeholder="Write a TO-DO and press Enter"/>
             </form>
-    
+
             <ul id=todos></ul>
         </div>
+        <div class="item" id="memoSection">
+            <form id="MemoForm">
+                <input type="text" id="memoTitleInput" class="title" required=true placeholder="Memo title"/>
+                <textarea id="memoContentInput" required=true placeholder="Write your memo here"></textarea>
+                <input type="text" id="memoLabelInput" list="memoLabelOptions" placeholder="Label (optional)"/>
+                <datalist id="memoLabelOptions"></datalist>
+                <button type="submit">Add memo</button>
+            </form>
+            <ul id="memoList"></ul>
+        </div>
     </div>
-  
-        
-    <img id="randomBgs"> 
-    
 
-    
+
+    <img id="randomBgs">
+
+
+
     <script src="greetings.js"></script>
     <script src="clock.js"></script>
     <script src="quotes.js"></script>
@@ -61,6 +71,7 @@
     <script src="todos.js"></script>
     <script src="weather.js"></script>
     <script src="30dayChallange.js"></script>
+    <script src="memos.js"></script>
     <script src="colors.js"></script>
 </body>
 </html>
