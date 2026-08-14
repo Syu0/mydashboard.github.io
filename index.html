@@ -23,14 +23,18 @@
     <h2 id="clock">00:00</h2>
 
     <div class="container">
-        <div class="item">
-            <span id="greeting" class="hidden"></span>
-            <div id="geolocationInfo">
-                <span></span><span></span>
-            </div>
+        <div class="item" id="memoSection">
+            <form id="MemoForm">
+                <input type="text" id="memoTitleInput" class="title" required=true placeholder="Memo title"/>
+                <textarea id="memoContentInput" required=true placeholder="Write your memo here"></textarea>
+                <input type="text" id="memoLabelInput" list="memoLabelOptions" placeholder="Label (optional)"/>
+                <datalist id="memoLabelOptions"></datalist>
+                <button type="submit">Add memo</button>
+            </form>
+            <ul id="memoList"></ul>
         </div>
         <div class="item" id="challange">
-            
+
             <form id=ChallangeForm>
                 <input type="text" class="title" required=true placeholder="Try something new for 30days."/>
                 <div><h2></h2> </div>
@@ -47,17 +51,24 @@
 
             <ul id=todos></ul>
         </div>
-        <div class="item" id="memoSection">
-            <form id="MemoForm">
-                <input type="text" id="memoTitleInput" class="title" required=true placeholder="Memo title"/>
-                <textarea id="memoContentInput" required=true placeholder="Write your memo here"></textarea>
-                <input type="text" id="memoLabelInput" list="memoLabelOptions" placeholder="Label (optional)"/>
-                <datalist id="memoLabelOptions"></datalist>
-                <button type="submit">Add memo</button>
-            </form>
-            <ul id="memoList"></ul>
-        </div>
     </div>
+
+    <footer id="favoritesFooter">
+        <div id="favoritesBar">
+            <button type="button" id="addFavoriteBtn" class="favorite-item favorite-add" title="사이트 추가">
+                <span class="favorite-icon">+</span>
+                <span class="favorite-label">추가</span>
+            </button>
+        </div>
+        <form id="FavoriteForm" class="hidden">
+            <input type="text" id="favoriteNameInput" class="title" maxlength="20" required=true placeholder="사이트 이름"/>
+            <input type="url" id="favoriteUrlInput" required=true placeholder="https://example.com"/>
+            <div class="favorite-form-actions">
+                <button type="submit">추가</button>
+                <button type="button" id="cancelFavoriteBtn">취소</button>
+            </div>
+        </form>
+    </footer>
 
 
     <img id="randomBgs">
@@ -72,6 +83,7 @@
     <script src="weather.js"></script>
     <script src="30dayChallange.js"></script>
     <script src="memos.js"></script>
+    <script src="favorites.js"></script>
     <script src="colors.js"></script>
 </body>
 </html>
