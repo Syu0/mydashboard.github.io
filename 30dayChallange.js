@@ -109,7 +109,7 @@ function paintCheckBoard(){
    }
    paintTodayBtn(newBtnInfo);
 
-    const result = myRecodes.filter(item =>{item.status === STATUS_COMPLATE});
+    const result = myRecodes.filter(item => item.status === STATUS_COMPLATE);
     if (result.length === 0 && myRecodes.length > 28){ complateEffect(); return;}
 
 }
