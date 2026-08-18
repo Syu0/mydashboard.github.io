@@ -1,6 +1,6 @@
 <!doctype html><meta charset="utf-8"><title>backlog check</title>
 <style>body{font:14px -apple-system,sans-serif;padding:24px;background:#111;color:#eee}
-b{color:#7bdcb5}i{color:#ff8f8f;font-style:normal}pre{white-space:pre-wrap}</style>
+b{color:#7bdcb5}i{color:#ff8f8f;font-style:normal}pre{white-space:pre-wrap;line-height:1.7}</style>
 <h3>backlog 연결 진단</h3><pre id="o">실행 중…</pre>
 <script src="backlog.js"></script>
 <script>
@@ -8,18 +8,18 @@ const out=[];
 function log(s){out.push(s);document.getElementById("o").innerHTML=out.join("\n");}
 (async()=>{
   log("build: <b>"+BACKLOG_BUILD+"</b>");
-  log("endpoint: "+BACKLOG_API);
-  const t0=performance.now();
-  try{
-    const r=await fetch(BACKLOG_API+"/health",{cache:"no-store"});
-    log("health: <b>HTTP "+r.status+"</b>  ("+Math.round(performance.now()-t0)+"ms)");
-    log("CORS 통과: <b>예</b> — 응답 본문 읽기 성공: "+JSON.stringify(await r.json()));
-  }catch(e){
-    log("health: <i>실패 "+e.name+" — "+e.message+"</i>");
-    log("→ DNS/연결/TLS/CORS 중 하나. 이 기기가 MagicDNS 를 안 쓰는 상태일 가능성이 높음.");
+  for(const base of BACKLOG_ENDPOINTS){
+    const t0=performance.now();
+    try{
+      const r=await fetch(base+"/health",{cache:"no-store"});
+      const body=await r.text();
+      log(base+"\n   → <b>HTTP "+r.status+"</b> "+Math.round(performance.now()-t0)+"ms  "+body.slice(0,60));
+    }catch(e){
+      log(base+"\n   → <i>실패 "+e.name+": "+e.message+"</i>  "+Math.round(performance.now()-t0)+"ms");
+    }
   }
-  const saved=localStorage.getItem("backlogToken");
-  log("저장된 토큰: "+(saved?"있음("+saved.length+"자)":"없음"));
+  log("\n선택된 엔드포인트: <b>"+(localStorage.getItem("backlogApi")||"(미결정)")+"</b>");
+  log("저장된 토큰: "+(localStorage.getItem("backlogToken")?"있음":"없음"));
   document.title="done";
 })();
 </script>

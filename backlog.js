@@ -13,10 +13,19 @@
  *   - ↻ 로 언제든 다시 조회. 응답은 항상 그 순간의 backlog.md 상태다.
  */
 
-const BACKLOG_API = "https://bot-macmini.tail7c5820.ts.net:8443/backlog";
+/* 엔드포인트 후보. 앞에서부터 시도하고 처음 성공한 것을 이후 계속 쓴다.
+ *  - 127.0.0.1  Mac mini 본체에서 볼 때. 절대 기기 밖으로 안 나간다.
+ *  - ts.net     다른 tailnet 기기에서 볼 때. 단 브라우저가 MagicDNS 로 해석해야 한다
+ *               (공개 DNS 로 해석하면 Funnel 인그레스로 가서 tailscaled 가 503 을 낸다).
+ */
+const BACKLOG_ENDPOINTS = [
+    "http://127.0.0.1:8787/backlog",
+    "https://bot-macmini.tail7c5820.ts.net:8443/backlog",
+];
+let BACKLOG_API = localStorage.getItem("backlogApi") || BACKLOG_ENDPOINTS[0];
 const BACKLOG_TOKEN_KEY = "backlogToken";
 const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
-const BACKLOG_BUILD = "2026-08-18c";   // 화면에 찍어서 캐시된 구버전을 식별한다
+const BACKLOG_BUILD = "2026-08-18d";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
 const backlogSummaryEl = document.querySelector("#backlogSummary");
@@ -219,16 +228,27 @@ function backlogError(e, opts = {}) {
         `<br>build ${BACKLOG_BUILD}`;
 }
 
-/* 인증 없이 서버 생존만 확인한다. '못 닿음' 과 '비밀번호 문제' 를 갈라주는 역할. */
+/* 인증 없이 서버 생존만 확인하면서, 닿는 엔드포인트를 고른다.
+ * '못 닿음' 과 '비밀번호 문제' 를 갈라주는 역할도 겸한다. */
 async function backlogReachable() {
-    try {
-        await backlogFetch("health", false);
-        return true;
-    } catch (e) {
-        backlogError(e, { silent: true });
-        return false;
+    const tried = [];
+    for (const base of [BACKLOG_API, ...BACKLOG_ENDPOINTS]) {
+        if (tried.includes(base)) continue;
+        tried.push(base);
+        BACKLOG_API = base;
+        try {
+            await backlogFetch("health", false);
+            localStorage.setItem("backlogApi", base);
+            return true;
+        } catch (e) {
+            lastBacklogError = e;
+        }
     }
+    backlogError(lastBacklogError || new Error("UNREACHABLE"), { silent: true });
+    return false;
 }
+
+let lastBacklogError = null;
 
 async function loadBacklogSummary(opts = {}) {
     const silent = opts.silent === true;
