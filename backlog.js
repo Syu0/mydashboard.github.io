@@ -66,6 +66,13 @@ async function backlogFetch(path) {
         headers: { Authorization: `Bearer ${backlogToken}` },
     });
     if (res.status === 401) throw new Error("UNAUTHORIZED");
+    if (res.status === 429) {
+        let wait = 0;
+        try { wait = (await res.json()).retry_after || 0; } catch (_) {}
+        const e = new Error("LOCKED");
+        e.retryAfter = wait;
+        throw e;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
 }
@@ -164,11 +171,21 @@ function backlogError(e) {
         backlogMetaEl.textContent = "";
         return;
     }
+    if (e.message === "LOCKED") {
+        // 연속 실패로 서버가 잠근 상태. 비밀번호가 맞아도 안 열린다.
+        const min = Math.ceil((e.retryAfter || 0) / 60);
+        setBacklogState("locked");
+        backlogSummaryEl.textContent = `연속 실패로 잠겼습니다. ${min}분 후 다시 시도하세요.`;
+        backlogMetaEl.textContent =
+            "Mac mini 에서 비밀번호 파일을 저장하면 즉시 풀립니다.";
+        return;
+    }
     // fetch 자체가 실패 = Mac mini 꺼짐 또는 Tailscale 미연결
     setBacklogState("offline");
     backlogSummaryEl.textContent = "백로그 서버에 닿지 않습니다.";
-    backlogMetaEl.textContent =
-        "Mac mini 가 꺼져 있거나 이 기기에 Tailscale 이 연결돼 있지 않습니다.";
+    backlogMetaEl.textContent = e.message.startsWith("HTTP")
+        ? `응답 ${e.message}`
+        : "Mac mini 가 꺼져 있거나 이 기기에 Tailscale 이 연결돼 있지 않습니다.";
 }
 
 async function loadBacklogSummary() {
@@ -200,7 +217,7 @@ async function showBacklogDetail() {
 
 async function unlockBacklog(event) {
     event.preventDefault();
-    const pw = backlogPasswordInput.value;
+    const pw = backlogPasswordInput.value.trim();
     if (!pw) return;
     backlogToken = pw;
     if (backlogRememberInput.checked) localStorage.setItem(BACKLOG_TOKEN_KEY, pw);
