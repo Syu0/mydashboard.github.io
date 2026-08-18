@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap');
 
 .hidden {
-                display: none;
+                display: none !important;
 }
 body {
                 font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -82,7 +82,7 @@ body {
                 margin-top: 0;
                 margin-bottom: 24px;
                 font-size: 92px;
-                font-weight: 200;
+                font-weight: 300;
                 letter-spacing: -3px;
                 display: inline-block;
                 padding: 6px 34px;
@@ -91,7 +91,8 @@ body {
                 -webkit-backdrop-filter: blur(14px);
                 backdrop-filter: blur(14px);
                 text-shadow:
-                                            0 2px 12px rgba(0, 0, 0, 0.55),
+                                            0 2px 14px rgba(0, 0, 0, 0.7),
+                                            0 1px 3px rgba(0, 0, 0, 0.55),
                                             0 0 1px rgba(0, 0, 0, 0.9);
 }
 #LoginForm input {
@@ -124,7 +125,7 @@ body {
 }
 
 #TodosForm input::placeholder {
-                color: rgba(245, 245, 245, 0.6);
+                color: rgba(255, 255, 255, 0.7);
                 font-style: normal;
 }
 
@@ -158,8 +159,7 @@ body {
 }
 
 #challange {
-                height: 250px;
-                overflow: auto;
+                min-height: 250px;
                 padding-right: 6px;
 }
 .complatedEffect {
@@ -175,7 +175,7 @@ body {
                         100% { color: #e82aff; }
     }
 #ChallangeForm input::placeholder {
-                color: rgba(245, 245, 245, 0.6);
+                color: rgba(255, 255, 255, 0.7);
                 font-style: normal;
 }
 #ChallangeForm div:last-child{
@@ -301,7 +301,7 @@ li button {
 
 #MemoForm input::placeholder,
 #MemoForm textarea::placeholder {
-                color: rgba(245, 245, 245, 0.5);
+                color: rgba(255, 255, 255, 0.7);
                 font-style: normal;
 }
 
@@ -517,7 +517,7 @@ li button {
 }
 
 #FavoriteForm input::placeholder {
-                color: rgba(245, 245, 245, 0.6);
+                color: rgba(255, 255, 255, 0.7);
                 font-style: normal;
 }
 
@@ -553,24 +553,6 @@ li button {
                 padding: 0 2px;
 }
 #backlogRefreshBtn:hover { opacity: 1; }
-
-/* 잘못된 주소(공개 origin)에서 열었을 때만 뜨는 안내. tailnet 주소에서는 숨는다. */
-.backlog-origin {
-                margin-bottom: 12px;
-                padding: 8px 10px;
-                border-radius: 8px;
-                border: 1px solid rgba(255, 209, 102, 0.35);
-                background: rgba(255, 209, 102, 0.10);
-                font-size: 11.5px;
-                line-height: 1.55;
-                color: #ffd9a0;
-}
-.backlog-origin a {
-                color: #9fd0ff;
-                text-decoration: none;
-                word-break: break-all;
-}
-.backlog-origin a:hover { text-decoration: underline; }
 
 .backlog-summary {
                 display: flex;
@@ -646,7 +628,7 @@ li button {
                 color: whitesmoke;
                 font-size: 12px;
 }
-.backlog-unlock input::placeholder { color: rgba(245, 245, 245, 0.5); }
+.backlog-unlock input::placeholder { color: rgba(255, 255, 255, 0.7); }
 .backlog-unlock button {
                 border-radius: 10px;
                 padding: 6px 12px;
@@ -722,3 +704,279 @@ li button {
                 cursor: pointer;
 }
 .backlog-remember input { width: auto; margin: 0; }
+
+/* ============================================================
+   가독성 · 정렬 · 버튼 체계 정비 (2026-08-18)
+   위 규칙들을 덮어쓰는 정정분이라 파일 끝에 모아 둔다.
+   ============================================================ */
+
+:root {
+                --btn-radius: 12px;
+                --btn-radius-sm: 10px;
+                --btn-pad: 8px 16px;
+                --btn-pad-sm: 5px 12px;
+                --btn-bg: rgba(255, 255, 255, 0.16);
+                --btn-bg-hover: rgba(255, 255, 255, 0.3);
+                --btn-border: 1px solid rgba(255, 255, 255, 0.22);
+                --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+                /* 밝은 배경 위 텍스트 가독선 */
+                --text-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- 1. 배경 대비 ---------- */
+/* 배경 사진이 밝아지면 명언·호칭이 하늘색에 묻힌다. 오버레이 대신
+   텍스트 자체에 그림자를 줘서 배경 사진의 밝기는 유지한다. */
+#quotes {
+                text-shadow: var(--text-shadow-soft);
+                font-weight: 400;
+}
+#quotes span:first-child { font-size: 17px; letter-spacing: -0.2px; }
+#quotes span:last-child { display: block; margin-top: 4px; font-size: 13px; opacity: 0.85; }
+
+#LoginForm span,
+#greeting {
+                text-shadow: var(--text-shadow-soft);
+                font-weight: 500;
+}
+#LoginForm input { text-shadow: none; }
+
+/* ---------- 2. 카드 정렬 ---------- */
+/* 카드 상단선을 맞추고(같은 행끼리 stretch) 기본 높이를 공유한다.
+   내부 리스트가 남는 높이를 먹고 스크롤하도록 .item 을 flex 컬럼으로 만든다. */
+.item {
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+}
+@media (min-width: 700px) {
+                body > .container {
+                                            align-items: stretch;
+                }
+                body > .container > .item {
+                                            min-height: 380px;
+                                            max-height: 640px;
+                }
+                /* BACKLOG 는 메모 카드에 매달린 모양이 아니라
+                   대시보드 하단을 가로지르는 푸터형 카드로 뺀다. */
+                body > .container > #backlogSection {
+                                            grid-column: 1 / -1;
+                                            min-height: 0;
+                }
+}
+
+/* 푸터형이 되면 폭이 남으므로 프로젝트를 여러 열로 흘린다. */
+@media (min-width: 700px) {
+                .backlog-projects {
+                                            display: grid;
+                                            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+                                            gap: 4px 20px;
+                }
+                .backlog-project { margin-bottom: 4px; }
+}
+
+/* ---------- 3. 리스트 넘침 방지 ---------- */
+/* 카드 높이를 공유하니 리스트가 남는 공간을 먹고 그 안에서만 스크롤한다. */
+.item { max-height: 70vh; }
+#backlogSection { max-height: none; }   /* 푸터 카드는 폭이 넓어 세로로 안 길어진다 */
+#todos,
+#memoList {
+                flex: 1 1 auto;
+                min-height: 120px;
+                overflow-y: auto;
+}
+/* 30days 체크판도 카드 상한 안에서만 스크롤한다(넘치면 카드 밖으로 샌다). */
+#checkBoard {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+}
+/* 자세히 목록은 60건 넘게 나올 수 있다 — 푸터 카드 안에서만 스크롤. */
+#backlogDetail {
+                max-height: 420px;
+                overflow-y: auto;
+}
+#todos { height: auto; }
+#memoList { max-height: none; }
+#todos li { word-break: break-word; }
+#todos li span { min-width: 0; overflow-wrap: anywhere; }
+.memo-title { overflow-wrap: anywhere; }
+.memo-content {
+                max-height: 220px;
+                overflow-y: auto;
+                overflow-wrap: anywhere;
+}
+#challange { overflow: hidden; }
+
+/* 스크롤바가 유리 카드 위에서 튀지 않게 */
+#todos, #memoList, .memo-content, #backlogDetail {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+
+/* ---------- 4. 버튼 체계 통일 ---------- */
+button {
+                border-radius: var(--btn-radius);
+                padding: var(--btn-pad);
+                background: var(--btn-bg);
+                border: var(--btn-border);
+                transition: background 0.2s var(--ease),
+                                        transform 0.12s var(--ease),
+                                        box-shadow 0.2s var(--ease),
+                                        opacity 0.2s var(--ease);
+}
+button:hover {
+                background: var(--btn-bg-hover);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+button:active { transform: translateY(0) scale(0.97); }
+button:focus-visible {
+                outline: 2px solid rgba(159, 208, 255, 0.9);
+                outline-offset: 2px;
+}
+
+/* 작은 보조 버튼(자세히 / 복사 / 조회)도 같은 곡률·여백 계열을 쓴다. */
+#backlogDetailBtn,
+.backlog-unlock button,
+#memoList li button.memo-copy {
+                border-radius: var(--btn-radius-sm);
+                padding: var(--btn-pad-sm);
+                font-size: 11.5px;
+}
+
+/* 아이콘 버튼은 배경이 아니라 밝기·크기로 반응한다(배경을 주면 아이콘이 뭉갠다). */
+li button,
+.backlog-actions button:not(#backlogDetailBtn),
+#backlogRefreshBtn,
+.favorite-delete {
+                transition: opacity 0.15s var(--ease), transform 0.12s var(--ease);
+}
+li button:hover,
+.backlog-actions button:not(#backlogDetailBtn):hover,
+#backlogRefreshBtn:hover {
+                background-color: rgba(255, 255, 255, 0);
+                box-shadow: none;
+                opacity: 1;
+                transform: scale(1.12);
+}
+.favorite-item:hover .favorite-icon {
+                background-color: rgba(255, 255, 255, 0.26);
+                transform: translateY(-2px);
+}
+.favorite-icon { transition: background-color 0.2s var(--ease), transform 0.12s var(--ease); }
+.favorite-item:hover .favorite-delete { transform: none; }
+
+/* ---------- 5. 경고 / 안내 배지 ---------- */
+/* 서버 오류·주소 안내는 일반 콘텐츠와 섞이면 안 된다. 색으로 층을 나눈다.
+   warn = 사람이 조치하면 되는 것, error = 지금 조회가 실패한 것. */
+.backlog-notice {
+                display: flex;
+                gap: 8px;
+                align-items: flex-start;
+                margin-bottom: 12px;
+                padding: 8px 10px;
+                border-radius: 10px;
+                font-size: 11.5px;
+                line-height: 1.55;
+}
+.backlog-notice::before {
+                content: "⚠";
+                flex: none;
+                font-size: 12px;
+                line-height: 1.4;
+}
+.backlog-notice.warn {
+                border: 1px solid rgba(255, 209, 102, 0.35);
+                background: rgba(255, 209, 102, 0.1);
+                color: #ffd9a0;
+}
+.backlog-notice.error {
+                border: 1px solid rgba(255, 107, 107, 0.4);
+                background: rgba(255, 107, 107, 0.12);
+                color: #ffb3b3;
+}
+.backlog-notice a { color: #9fd0ff; text-decoration: none; word-break: break-all; }
+.backlog-notice a:hover { text-decoration: underline; }
+.backlog-notice .notice-sub { display: block; opacity: 0.75; margin-top: 2px; }
+
+/* ---------- 6. 카드 위 텍스트 대비 (스크린샷 검증 후 정정) ---------- */
+/* 흰 반투명 카드가 밝은 하늘/구름 위에 오면 흰 글씨가 그대로 묻힌다.
+   유리 질감은 유지하되 스크림을 흰색 → 어두운 쪽으로 뒤집는다. */
+.item {
+                background: rgba(26, 26, 30, 0.46);
+                border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.item .title,
+.backlog-head .title {
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.backlog-head .title { opacity: 0.9; }
+
+/* 경고 배지는 카드 안에서도 한 겹 더 진하게 깔아 색이 배경에 안 섞이게 한다. */
+.backlog-notice.warn {
+                background: rgba(70, 52, 12, 0.72);
+                border-color: rgba(255, 209, 102, 0.55);
+                color: #ffdca8;
+}
+.backlog-notice.error {
+                background: rgba(74, 24, 24, 0.72);
+                border-color: rgba(255, 107, 107, 0.55);
+                color: #ffc2c2;
+}
+.backlog-notice .notice-sub { opacity: 0.88; }
+
+/* 행 안에서 gap 을 쓰는 버튼 그룹은 기본 margin(5px)을 지운다 —
+   gap 과 겹쳐 간격이 두 배가 되고, 세로로도 입력창과 높이가 안 맞았다. */
+.backlog-unlock button,
+.backlog-actions button,
+.favorite-form-actions button { margin: 0; }
+
+/* ---------- 7. 실측 스크린샷에서 드러난 정정 ---------- */
+/* 밝고 복잡한 배경 사진(가을 단풍 등) 위에서는 얇은 그림자로 부족했다. */
+#quotes,
+#LoginForm span,
+#greeting {
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85),
+                                        0 0 16px rgba(0, 0, 0, 0.7);
+}
+
+/* 30days 체크판이 세로 한 줄로 쌓여 카드를 길게 만들었다(#checkBoard 가
+   .container 의 flex-column 을 그대로 물려받고 있었다). 줄바꿈되는 행으로 편다. */
+#checkBoard.container {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                justify-content: flex-start;
+                gap: 8px;
+}
+#checkBoard .item.progress,
+#checkBoard .item.complated { margin: 0; }
+
+/* '이 브라우저에 기억' 체크박스가 .backlog-unlock input 의 flex:1 을 물려받아
+   푸터 폭만큼 늘어나 라벨을 오른쪽 끝까지 밀어냈다. */
+.backlog-remember input { flex: none; }
+
+/* 밝은 하늘 배경에서는 그림자만으로 부족했다 — 시계와 같은 유리 알약을 깔아
+   같은 디자인 언어로 대비를 확보한다. */
+#quotes {
+                /* inline-block 으로 두면 시계(h2, inline-block)와 같은 줄에 붙는다. */
+                display: block;
+                width: fit-content;
+                margin: 0 auto 10px;
+                max-width: min(92%, 900px);
+                padding: 8px 20px;
+                border-radius: 18px;
+                background-color: rgba(0, 0, 0, 0.22);
+                -webkit-backdrop-filter: blur(12px);
+                backdrop-filter: blur(12px);
+}
+
+/* 카드 밖(배경 사진 위)에 바로 놓이는 버튼·입력은 라벨도 배경에 묻힌다. */
+button { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
+#LoginForm input::placeholder { color: rgba(255, 255, 255, 0.7); }
+
+/* 배경 사진이 absolute + height:100vh 라 첫 화면 아래로 스크롤하면 흰 바닥이 드러난다.
+   푸터 카드가 생기며 페이지가 길어져 더 잘 보인다 — 뷰포트에 고정한다. */
+#randomBgs { position: fixed; }
+body { background-color: #10131a; }

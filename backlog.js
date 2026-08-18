@@ -36,10 +36,11 @@ const BACKLOG_UI_URL = "https://bot-macmini.tail7c5820.ts.net:8443/backlog/ui/";
 const BACKLOG_OK_HOSTS = ["bot-macmini.tail7c5820.ts.net", "localhost", "127.0.0.1", "[::1]", ""];
 const BACKLOG_TOKEN_KEY = "backlogToken";
 const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
-const BACKLOG_BUILD = "2026-08-18f";   // 화면에 찍어서 캐시된 구버전을 식별한다
+const BACKLOG_BUILD = "2026-08-18g";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
 const backlogOriginEl = document.querySelector("#backlogOrigin");
+const backlogNoticeEl = document.querySelector("#backlogNotice");
 const backlogSummaryEl = document.querySelector("#backlogSummary");
 const backlogProjectsEl = document.querySelector("#backlogProjects");
 const backlogDetailEl = document.querySelector("#backlogDetail");
@@ -60,6 +61,22 @@ function esc(s) {
     }[c]));
 }
 
+/* 오류·안내는 일반 콘텐츠와 섞이면 눈에 안 들어온다. 색 있는 배지로 따로 띄운다.
+ *   warn  = 사람이 조치하면 되는 것(주소·비밀번호)
+ *   error = 지금 조회가 실패한 것(서버 무응답·차단·HTTP 오류)
+ * sub 는 배지 안 둘째 줄(원인/빌드 등 부연). */
+function setBacklogNotice(kind, html, sub) {
+    if (!backlogNoticeEl) return;
+    if (!kind) {
+        backlogNoticeEl.className = "backlog-notice hidden";
+        backlogNoticeEl.innerHTML = "";
+        return;
+    }
+    backlogNoticeEl.className = `backlog-notice ${kind}`;
+    backlogNoticeEl.innerHTML =
+        `<span>${html}${sub ? `<span class="notice-sub">${sub}</span>` : ""}</span>`;
+}
+
 /* 공개 주소(github.io 등)에서 열면 Chrome 이 사설망 요청을 막아 조회가 실패한다.
  * 실패한 뒤에 알리면 늦으므로, 주소만 보고 페이지 로드 시점에 바로 안내한다. */
 function backlogOriginOk() {
@@ -69,9 +86,9 @@ function backlogOriginOk() {
 function renderBacklogOriginNotice() {
     if (!backlogOriginEl || backlogOriginOk()) return;
     backlogOriginEl.innerHTML =
-        "이 주소에서는 백로그가 조회되지 않습니다. " +
-        `<a href="${BACKLOG_UI_URL}">${BACKLOG_UI_URL}</a> 로 접속해야 하며, ` +
-        "그 기기에서 Tailscale 이 연결돼 있어야 합니다.";
+        "<span>이 주소에서는 백로그가 조회되지 않습니다." +
+        `<span class="notice-sub"><a href="${BACKLOG_UI_URL}">${BACKLOG_UI_URL}</a>` +
+        " 로 접속해야 하며, 그 기기에서 Tailscale 이 연결돼 있어야 합니다.</span></span>";
     backlogOriginEl.classList.remove("hidden");
 }
 
@@ -140,6 +157,7 @@ function setBacklogState(mode) {
 }
 
 function renderBacklogSummary(data) {
+    setBacklogNotice(null);   // 조회 성공 = 직전 오류 배지 제거
     const t = data.totals;
     backlogSummaryEl.innerHTML = `
         <span class="backlog-chip red">🔴 ${t.red}</span>
@@ -220,41 +238,42 @@ function backlogError(e, opts = {}) {
         backlogToken = null;
         localStorage.removeItem(BACKLOG_TOKEN_KEY);
         setBacklogState("locked");
-        backlogSummaryEl.textContent = silent
-            ? "비밀번호를 입력하면 백로그를 조회합니다."
-            : "비밀번호가 맞지 않습니다.";
+        backlogSummaryEl.textContent = "비밀번호를 입력하면 백로그를 조회합니다.";
+        setBacklogNotice(silent ? null : "warn", "비밀번호가 맞지 않습니다.");
         backlogMetaEl.textContent = "";
         return;
     }
     if (e.message === "TIMEOUT") {
         setBacklogState("offline");
-        backlogSummaryEl.textContent = "서버가 응답하지 않습니다.";
-        backlogMetaEl.textContent = `${BACKLOG_TIMEOUT / 1000}초 내 무응답 · build ${BACKLOG_BUILD}`;
+        backlogSummaryEl.textContent = "";
+        setBacklogNotice("error", "서버가 응답하지 않습니다.",
+            `${BACKLOG_TIMEOUT / 1000}초 내 무응답 · build ${BACKLOG_BUILD}`);
+        backlogMetaEl.textContent = "";
         return;
     }
     if (e.message === "LOCKED") {
         // 연속 실패로 서버가 잠근 상태. 비밀번호가 맞아도 안 열린다.
         const min = Math.ceil((e.retryAfter || 0) / 60);
         setBacklogState("locked");
-        backlogSummaryEl.textContent = `연속 실패로 잠겼습니다. ${min}분 후 다시 시도하세요.`;
-        backlogMetaEl.textContent =
-            "Mac mini 에서 비밀번호 파일을 저장하면 즉시 풀립니다.";
+        backlogSummaryEl.textContent = "";
+        setBacklogNotice("error", `연속 실패로 잠겼습니다. ${min}분 후 다시 시도하세요.`,
+            "Mac mini 에서 비밀번호 파일을 저장하면 즉시 풀립니다.");
+        backlogMetaEl.textContent = "";
         return;
     }
     setBacklogState("offline");
+    backlogSummaryEl.textContent = "";
+    backlogMetaEl.textContent = "";
     if (e.message.startsWith("HTTP")) {
         // 서버에는 닿았고 응답만 이상한 경우 — 원인이 전혀 다르므로 문구를 나눈다.
-        backlogSummaryEl.textContent = `서버가 ${e.message} 를 반환했습니다.`;
-        backlogMetaEl.textContent = `build ${BACKLOG_BUILD}`;
+        setBacklogNotice("error", `서버가 ${e.message} 를 반환했습니다.`, `build ${BACKLOG_BUILD}`);
         return;
     }
     // UNREACHABLE — DNS/연결/TLS/CORS 중 하나. 브라우저가 구분해주지 않는다.
-    backlogSummaryEl.textContent = "백로그 서버에 닿지 않습니다.";
-    backlogMetaEl.innerHTML =
+    setBacklogNotice("error", "백로그 서버에 닿지 않습니다.",
         "공개 주소에서는 Chrome 이 사설망 요청을 차단합니다. " +
-        `<a href="${BACKLOG_UI_URL}" style="color:#9fd0ff">Mac mini 주소로 열기</a>` +
-        " — Tailscale 연결 상태여야 합니다." +
-        `<br>build ${BACKLOG_BUILD}`;
+        `<a href="${BACKLOG_UI_URL}">Mac mini 주소로 열기</a>` +
+        ` — Tailscale 연결 상태여야 합니다. · build ${BACKLOG_BUILD}`);
 }
 
 /* 인증 없이 서버 생존만 확인하면서, 닿는 엔드포인트를 고른다.
@@ -287,6 +306,7 @@ async function loadBacklogSummary(opts = {}) {
         return;
     }
     backlogSummaryEl.textContent = "조회 중…";
+    setBacklogNotice(null);
     // 서버부터 확인 — 안 닿으면 토큰을 지우지 않는다(꺼져 있을 뿐인데 비번을 날리면 안 됨).
     if (!(await backlogReachable())) return;
     try {
@@ -323,6 +343,7 @@ function lockBacklog() {
     localStorage.removeItem(BACKLOG_TOKEN_KEY);
     setBacklogState("locked");
     backlogSummaryEl.textContent = "잠금. 비밀번호를 입력하면 다시 조회합니다.";
+    setBacklogNotice(null);
     backlogMetaEl.textContent = "";
 }
 
