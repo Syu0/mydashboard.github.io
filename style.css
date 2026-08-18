@@ -980,3 +980,113 @@ button { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
    푸터 카드가 생기며 페이지가 길어져 더 잘 보인다 — 뷰포트에 고정한다. */
 #randomBgs { position: fixed; }
 body { background-color: #10131a; }
+
+/* ============================================================
+   8. 백로그 카드 정보 위계 (2026-08-18)
+   메타 3종이 같은 색·같은 크기로 늘어져 스캔이 안 됐다.
+   이름 > 상태 배지 > 활동시각 순으로 층을 나눈다.
+   ============================================================ */
+
+.backlog-project {
+                margin-bottom: 0;
+                padding: 8px 0 9px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.backlog-project:last-child { border-bottom: none; }
+
+.backlog-project-name {
+                font-size: 12.5px;
+                font-weight: 600;
+                opacity: 0.96;
+                letter-spacing: -0.1px;
+}
+/* 열린 건수 = 그 카드에서 제일 중요한 숫자. 칩으로 세운다. */
+.backlog-project-count {
+                flex: none;
+                opacity: 1;
+                font-size: 11px;
+                font-weight: 600;
+                padding: 1px 7px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.14);
+}
+
+.backlog-bar {
+                height: 5px;
+                margin: 6px 0 6px;
+                cursor: help;
+}
+.backlog-bar .seg { transition: filter 0.15s ease; }
+.backlog-bar:hover .seg { filter: saturate(1.3) brightness(1.12); }
+
+.backlog-project-meta {
+                gap: 4px;
+                opacity: 1;
+                align-items: center;
+}
+
+/* 상태값은 문장이 아니라 배지다. */
+.backlog-tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                padding: 1px 7px;
+                border-radius: 999px;
+                font-size: 10.5px;
+                line-height: 1.6;
+                white-space: nowrap;
+                border: 1px solid transparent;
+                cursor: help;
+}
+.backlog-tag.prio { font-variant-numeric: tabular-nums; font-weight: 600; }
+.backlog-tag.prio.red { background: rgba(255, 107, 107, 0.16); border-color: rgba(255, 107, 107, 0.4); color: #ffb3b3; }
+.backlog-tag.prio.yellow { background: rgba(255, 209, 102, 0.16); border-color: rgba(255, 209, 102, 0.4); color: #ffe0a3; }
+.backlog-tag.prio.green { background: rgba(123, 220, 181, 0.16); border-color: rgba(123, 220, 181, 0.4); color: #a6e9cd; }
+
+/* 최고령: 오래될수록 색이 올라간다(21일+ 빨강 / 14일+ 노랑 / 그 외 무채색). */
+.backlog-tag.age { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.16); color: rgba(245, 245, 245, 0.8); }
+.backlog-project-meta .backlog-tag.age.stale-mid {
+                background: rgba(255, 209, 102, 0.14);
+                border-color: rgba(255, 209, 102, 0.38);
+                color: #ffe0a3;
+                font-weight: 500;
+}
+.backlog-project-meta .backlog-tag.age.stale-high {
+                background: rgba(255, 107, 107, 0.16);
+                border-color: rgba(255, 107, 107, 0.42);
+                color: #ffb3b3;
+                font-weight: 600;
+}
+.backlog-tag.dirty {
+                background: rgba(159, 208, 255, 0.14);
+                border-color: rgba(159, 208, 255, 0.38);
+                color: #bcdcff;
+}
+
+/* 마지막 활동은 배경정보 — 한 단 아래로 내리고 흐리게. */
+.backlog-act {
+                margin-top: 4px;
+                font-size: 10.5px;
+                opacity: 0.55;
+                font-variant-numeric: tabular-nums;
+                cursor: help;
+}
+.backlog-act.stale-mid { color: #ffd166; opacity: 0.85; }
+.backlog-act.stale-high { color: #ff8f8f; opacity: 0.95; font-weight: 600; }
+
+/* 요약 칩에도 무엇을 세는지 이름을 붙인다(막대와 같은 3색이라는 걸 범례로 명시). */
+.backlog-chip b {
+                font-weight: 400;
+                font-size: 10.5px;
+                opacity: 0.7;
+                margin-left: 3px;
+}
+.backlog-chip.red { background: rgba(255, 107, 107, 0.18); }
+.backlog-chip.yellow { background: rgba(255, 209, 102, 0.18); }
+.backlog-chip.green { background: rgba(123, 220, 181, 0.18); }
+.backlog-chip { cursor: help; }
+.backlog-legend {
+                font-size: 10.5px;
+                opacity: 0.5;
+                align-self: center;
+}

@@ -36,7 +36,7 @@ const BACKLOG_UI_URL = "https://bot-macmini.tail7c5820.ts.net:8443/backlog/ui/";
 const BACKLOG_OK_HOSTS = ["bot-macmini.tail7c5820.ts.net", "localhost", "127.0.0.1", "[::1]", ""];
 const BACKLOG_TOKEN_KEY = "backlogToken";
 const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
-const BACKLOG_BUILD = "2026-08-18g";   // 화면에 찍어서 캐시된 구버전을 식별한다
+const BACKLOG_BUILD = "2026-08-18h";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
 const backlogOriginEl = document.querySelector("#backlogOrigin");
@@ -91,6 +91,14 @@ function renderBacklogOriginNotice() {
         " 로 접속해야 하며, 그 기기에서 Tailscale 이 연결돼 있어야 합니다.</span></span>";
     backlogOriginEl.classList.remove("hidden");
 }
+
+/* 🔴/🟡/🟢 의 의미. 요약 칩, 프로젝트 막대, 태그가 모두 이 정의를 쓴다
+ * (backlog.md 운영 규칙의 우선순위 등급과 같은 분류). */
+const BACKLOG_PRIO = [
+    { k: "red", emoji: "🔴", label: "긴급/보안", hint: "방치 시 위험이 커지는 것" },
+    { k: "yellow", emoji: "🟡", label: "운영영향", hint: "지금 불편하지만 위험하진 않은 것" },
+    { k: "green", emoji: "🟢", label: "정리성", hint: "시점 무관, 여유 있을 때" },
+];
 
 function backlogStaleClass(days) {
     if (days === null || days === undefined) return "";
@@ -159,36 +167,45 @@ function setBacklogState(mode) {
 function renderBacklogSummary(data) {
     setBacklogNotice(null);   // 조회 성공 = 직전 오류 배지 제거
     const t = data.totals;
-    backlogSummaryEl.innerHTML = `
-        <span class="backlog-chip red">🔴 ${t.red}</span>
-        <span class="backlog-chip yellow">🟡 ${t.yellow}</span>
-        <span class="backlog-chip green">🟢 ${t.green}</span>
-        <span class="backlog-chip total">${t.open}건 · ${data.projects.length}개 프로젝트</span>`;
+    backlogSummaryEl.innerHTML =
+        BACKLOG_PRIO.map((x) =>
+            `<span class="backlog-chip ${x.k}" title="${x.emoji} ${x.label} — ${x.hint}">` +
+            `${x.emoji} ${t[x.k]}<b>${x.label}</b></span>`).join("") +
+        `<span class="backlog-chip total">${t.open}건 · ${data.projects.length}개 프로젝트</span>` +
+        `<span class="backlog-legend">아래 막대 = 같은 3색 비율</span>`;
 
     backlogProjectsEl.innerHTML = "";
     for (const p of data.projects) {
         const act = backlogLastActivity(p);
         const li = document.createElement("li");
         li.className = "backlog-project";
-        const bar = [
-            p.red ? `<i class="seg red" style="flex:${p.red}"></i>` : "",
-            p.yellow ? `<i class="seg yellow" style="flex:${p.yellow}"></i>` : "",
-            p.green ? `<i class="seg green" style="flex:${p.green}"></i>` : "",
-        ].join("");
+        const filled = BACKLOG_PRIO.filter((x) => p[x.k]);
+        // 막대 칸마다 무엇을 뜻하는지 붙인다 — 위 요약 수치와 같은 분류다.
+        const bar = filled.map((x) =>
+            `<i class="seg ${x.k}" style="flex:${p[x.k]}" ` +
+            `title="${x.emoji} ${x.label} ${p[x.k]}건 — ${x.hint}"></i>`).join("");
+        // 같은 값을 숫자로도 보여준다(호버 못 하는 환경 대비 + 막대 비율만으로는 건수를 모른다).
+        const prioTags = filled.map((x) =>
+            `<span class="backlog-tag prio ${x.k}" title="${x.emoji} ${x.label} ${p[x.k]}건">` +
+            `${x.emoji} ${p[x.k]}</span>`).join("");
         const actLabel = act.days === null
             ? "활동기록 없음"
             : `${act.src} ${act.days}일 전`;
+        const ageLabel = backlogDaysLabel(p.oldest_days, p.oldest_is_floor);
         li.innerHTML = `
             <div class="backlog-project-head">
                 <span class="backlog-project-name">${esc(p.name)}</span>
-                <span class="backlog-project-count">${p.open}</span>
+                <span class="backlog-project-count" title="열린 항목 ${p.open}건">${p.open}</span>
             </div>
             <div class="backlog-bar">${bar}</div>
             <div class="backlog-project-meta">
-                <span class="${backlogStaleClass(act.days)}">${esc(actLabel)}</span>
-                <span>최고령 ${backlogDaysLabel(p.oldest_days, p.oldest_is_floor)}</span>
-                ${p.dirty ? `<span class="dirty">미커밋 ${p.dirty}</span>` : ""}
-            </div>`;
+                ${prioTags}
+                <span class="backlog-tag age ${backlogStaleClass(p.oldest_days)}"
+                      title="가장 오래된 항목이 ${ageLabel} 됐다">최고령 ${ageLabel}</span>
+                ${p.dirty ? `<span class="backlog-tag dirty" title="커밋 안 된 변경 파일 ${p.dirty}개">미커밋 ${p.dirty}</span>` : ""}
+            </div>
+            <div class="backlog-act ${backlogStaleClass(act.days)}"
+                 title="마지막 활동(커밋이 있으면 커밋, 없으면 백로그 수정)">${esc(actLabel)}</div>`;
         backlogProjectsEl.appendChild(li);
     }
 
