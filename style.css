@@ -1090,3 +1090,12 @@ body { background-color: #10131a; }
                 opacity: 0.5;
                 align-self: center;
 }
+
+/* 배지 안에서 명령어를 구분해 보여준다(끄는 방법을 그 자리에서 알려주려고). */
+.backlog-notice code {
+                padding: 0 4px;
+                border-radius: 4px;
+                background: rgba(0, 0, 0, 0.35);
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 10.5px;
+}

@@ -36,7 +36,7 @@ const BACKLOG_UI_URL = "https://bot-macmini.tail7c5820.ts.net:8443/backlog/ui/";
 const BACKLOG_OK_HOSTS = ["bot-macmini.tail7c5820.ts.net", "localhost", "127.0.0.1", "[::1]", ""];
 const BACKLOG_TOKEN_KEY = "backlogToken";
 const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
-const BACKLOG_BUILD = "2026-08-18h";   // 화면에 찍어서 캐시된 구버전을 식별한다
+const BACKLOG_BUILD = "2026-08-18j";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
 const backlogOriginEl = document.querySelector("#backlogOrigin");
@@ -142,6 +142,12 @@ async function backlogFetch(path, withAuth = true) {
         clearTimeout(timer);
     }
     if (res.status === 401) throw new Error("UNAUTHORIZED");
+    if (res.status === 503) {
+        // 서버가 스스로 막은 경우 — 원인을 본문에 실어 보낸다(Funnel 공개 노출 가드).
+        let code = "";
+        try { code = (await res.json()).error || ""; } catch (_) {}
+        if (code === "funnel_exposed") throw new Error("FUNNEL_EXPOSED");
+    }
     if (res.status === 429) {
         let wait = 0;
         try { wait = (await res.json()).retry_after || 0; } catch (_) {}
@@ -281,6 +287,13 @@ function backlogError(e, opts = {}) {
     setBacklogState("offline");
     backlogSummaryEl.textContent = "";
     backlogMetaEl.textContent = "";
+    if (e.message === "FUNNEL_EXPOSED") {
+        // 서버가 살아 있는데도 데이터를 안 준 것 — '못 닿음' 과 원인이 정반대다.
+        setBacklogNotice("error", "공개 노출 상태여서 서버가 조회를 막았습니다.",
+            "이 포트가 Tailscale Funnel 로 인터넷에 열려 있다. " +
+            "Mac mini 에서 <code>tailscale funnel 8443 off</code> 로 끈 뒤 다시 조회할 것.");
+        return;
+    }
     if (e.message.startsWith("HTTP")) {
         // 서버에는 닿았고 응답만 이상한 경우 — 원인이 전혀 다르므로 문구를 나눈다.
         setBacklogNotice("error", `서버가 ${e.message} 를 반환했습니다.`, `build ${BACKLOG_BUILD}`);
@@ -322,6 +335,13 @@ async function loadBacklogSummary(opts = {}) {
         backlogMetaEl.textContent = "";
         return;
     }
+    if (!backlogTokenSendable(backlogToken)) {
+        setBacklogState("locked");
+        backlogSummaryEl.textContent = "";
+        setBacklogNotice("warn", "저장된 비밀번호에 한글·이모지가 들어 있습니다.",
+            "요청 헤더에 담을 수 없는 문자다. 영문·숫자·기호로 된 비밀번호로 다시 입력할 것.");
+        return;
+    }
     backlogSummaryEl.textContent = "조회 중…";
     setBacklogNotice(null);
     // 서버부터 확인 — 안 닿으면 토큰을 지우지 않는다(꺼져 있을 뿐인데 비번을 날리면 안 됨).
@@ -345,10 +365,22 @@ async function showBacklogDetail() {
     }
 }
 
+/* HTTP 헤더에는 ISO-8859-1 밖 문자를 담을 수 없다 — 한글/이모지 비밀번호면
+ * fetch 가 예외를 던지고, 그 예외는 '서버에 닿지 않음' 과 구분이 안 된다.
+ * 보내기 전에 걸러서 원인을 정확히 말해준다. */
+function backlogTokenSendable(t) {
+    return /^[\x20-\x7E]*$/.test(t);
+}
+
 async function unlockBacklog(event) {
     event.preventDefault();
     const pw = backlogPasswordInput.value.trim();
     if (!pw) return;
+    if (!backlogTokenSendable(pw)) {
+        setBacklogNotice("warn", "비밀번호에 한글·이모지가 들어 있습니다.",
+            "요청 헤더에 담을 수 없는 문자다. 영문·숫자·기호로 된 비밀번호를 쓸 것.");
+        return;
+    }
     backlogToken = pw;
     if (backlogRememberInput.checked) localStorage.setItem(BACKLOG_TOKEN_KEY, pw);
     backlogPasswordInput.value = "";
