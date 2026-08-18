@@ -554,6 +554,24 @@ li button {
 }
 #backlogRefreshBtn:hover { opacity: 1; }
 
+/* 잘못된 주소(공개 origin)에서 열었을 때만 뜨는 안내. tailnet 주소에서는 숨는다. */
+.backlog-origin {
+                margin-bottom: 12px;
+                padding: 8px 10px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 209, 102, 0.35);
+                background: rgba(255, 209, 102, 0.10);
+                font-size: 11.5px;
+                line-height: 1.55;
+                color: #ffd9a0;
+}
+.backlog-origin a {
+                color: #9fd0ff;
+                text-decoration: none;
+                word-break: break-all;
+}
+.backlog-origin a:hover { text-decoration: underline; }
+
 .backlog-summary {
                 display: flex;
                 flex-wrap: wrap;

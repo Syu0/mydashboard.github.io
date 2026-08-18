@@ -29,11 +29,17 @@ const BACKLOG_ENDPOINTS = [
     "https://bot-macmini.tail7c5820.ts.net:8443/backlog",
 ];
 let BACKLOG_API = BACKLOG_ENDPOINTS[0];
+
+/* Mac mini 가 대시보드를 직접 서빙하는 주소. 백로그가 확실히 조회되는 유일한 경로다. */
+const BACKLOG_UI_URL = "https://bot-macmini.tail7c5820.ts.net:8443/backlog/ui/";
+/* 여기서 열었으면 사설망 요청이 애초에 차단 대상이 아니다(같은 기기 / 같은 origin). */
+const BACKLOG_OK_HOSTS = ["bot-macmini.tail7c5820.ts.net", "localhost", "127.0.0.1", "[::1]", ""];
 const BACKLOG_TOKEN_KEY = "backlogToken";
 const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
-const BACKLOG_BUILD = "2026-08-18e";   // 화면에 찍어서 캐시된 구버전을 식별한다
+const BACKLOG_BUILD = "2026-08-18f";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
+const backlogOriginEl = document.querySelector("#backlogOrigin");
 const backlogSummaryEl = document.querySelector("#backlogSummary");
 const backlogProjectsEl = document.querySelector("#backlogProjects");
 const backlogDetailEl = document.querySelector("#backlogDetail");
@@ -52,6 +58,21 @@ function esc(s) {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
     }[c]));
+}
+
+/* 공개 주소(github.io 등)에서 열면 Chrome 이 사설망 요청을 막아 조회가 실패한다.
+ * 실패한 뒤에 알리면 늦으므로, 주소만 보고 페이지 로드 시점에 바로 안내한다. */
+function backlogOriginOk() {
+    return BACKLOG_OK_HOSTS.includes(location.hostname);
+}
+
+function renderBacklogOriginNotice() {
+    if (!backlogOriginEl || backlogOriginOk()) return;
+    backlogOriginEl.innerHTML =
+        "이 주소에서는 백로그가 조회되지 않습니다. " +
+        `<a href="${BACKLOG_UI_URL}">${BACKLOG_UI_URL}</a> 로 접속해야 하며, ` +
+        "그 기기에서 Tailscale 이 연결돼 있어야 합니다.";
+    backlogOriginEl.classList.remove("hidden");
 }
 
 function backlogStaleClass(days) {
@@ -231,8 +252,8 @@ function backlogError(e, opts = {}) {
     backlogSummaryEl.textContent = "백로그 서버에 닿지 않습니다.";
     backlogMetaEl.innerHTML =
         "공개 주소에서는 Chrome 이 사설망 요청을 차단합니다. " +
-        '<a href="https://bot-macmini.tail7c5820.ts.net:8443/backlog/ui/" ' +
-        'style="color:#9fd0ff">Mac mini 주소로 열기</a>' +
+        `<a href="${BACKLOG_UI_URL}" style="color:#9fd0ff">Mac mini 주소로 열기</a>` +
+        " — Tailscale 연결 상태여야 합니다." +
         `<br>build ${BACKLOG_BUILD}`;
 }
 
@@ -306,6 +327,7 @@ function lockBacklog() {
 }
 
 if (backlogSection) {
+    renderBacklogOriginNotice();
     backlogUnlockForm.addEventListener("submit", unlockBacklog);
     backlogRefreshBtn.addEventListener("click", () => {
         backlogDetailEl.innerHTML = "";
