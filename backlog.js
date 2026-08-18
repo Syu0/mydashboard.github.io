@@ -15,6 +15,8 @@
 
 const BACKLOG_API = "https://bot-macmini.tail7c5820.ts.net:8443/backlog";
 const BACKLOG_TOKEN_KEY = "backlogToken";
+const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
+const BACKLOG_BUILD = "2026-08-18c";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
 const backlogSummaryEl = document.querySelector("#backlogSummary");
@@ -60,11 +62,24 @@ function backlogLastActivity(p) {
     return { days: null, src: null };
 }
 
-async function backlogFetch(path) {
-    const res = await fetch(`${BACKLOG_API}/${path}`, {
-        cache: "no-store",
-        headers: { Authorization: `Bearer ${backlogToken}` },
-    });
+async function backlogFetch(path, withAuth = true) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), BACKLOG_TIMEOUT);
+    let res;
+    try {
+        res = await fetch(`${BACKLOG_API}/${path}`, {
+            cache: "no-store",
+            signal: ctl.signal,
+            headers: withAuth ? { Authorization: `Bearer ${backlogToken}` } : {},
+        });
+    } catch (err) {
+        // fetch 가 던지는 경우 = DNS 실패 / 연결 거부 / TLS 실패 / CORS 차단 / 타임아웃.
+        // 브라우저는 보안상 이들을 구분해주지 않는다.
+        const e = new Error(err.name === "AbortError" ? "TIMEOUT" : "UNREACHABLE");
+        throw e;
+    } finally {
+        clearTimeout(timer);
+    }
     if (res.status === 401) throw new Error("UNAUTHORIZED");
     if (res.status === 429) {
         let wait = 0;
@@ -162,13 +177,23 @@ function renderBacklogDetail(detail) {
     backlogDetailEl.appendChild(list);
 }
 
-function backlogError(e) {
+function backlogError(e, opts = {}) {
+    const silent = opts.silent === true;   // 페이지 로드 시 자동조회 = 조용히 처리
     if (e.message === "UNAUTHORIZED") {
+        // 저장돼 있던 토큰이 더 이상 안 맞는 경우. 새로고침마다 '오류' 를 띄우지 않는다.
         backlogToken = null;
         localStorage.removeItem(BACKLOG_TOKEN_KEY);
         setBacklogState("locked");
-        backlogSummaryEl.textContent = "비밀번호가 맞지 않습니다.";
+        backlogSummaryEl.textContent = silent
+            ? "비밀번호를 입력하면 백로그를 조회합니다."
+            : "비밀번호가 맞지 않습니다.";
         backlogMetaEl.textContent = "";
+        return;
+    }
+    if (e.message === "TIMEOUT") {
+        setBacklogState("offline");
+        backlogSummaryEl.textContent = "서버가 응답하지 않습니다.";
+        backlogMetaEl.textContent = `${BACKLOG_TIMEOUT / 1000}초 내 무응답 · build ${BACKLOG_BUILD}`;
         return;
     }
     if (e.message === "LOCKED") {
@@ -180,15 +205,33 @@ function backlogError(e) {
             "Mac mini 에서 비밀번호 파일을 저장하면 즉시 풀립니다.";
         return;
     }
-    // fetch 자체가 실패 = Mac mini 꺼짐 또는 Tailscale 미연결
     setBacklogState("offline");
+    if (e.message.startsWith("HTTP")) {
+        // 서버에는 닿았고 응답만 이상한 경우 — 원인이 전혀 다르므로 문구를 나눈다.
+        backlogSummaryEl.textContent = `서버가 ${e.message} 를 반환했습니다.`;
+        backlogMetaEl.textContent = `build ${BACKLOG_BUILD}`;
+        return;
+    }
+    // UNREACHABLE — DNS/연결/TLS/CORS 중 하나. 브라우저가 구분해주지 않는다.
     backlogSummaryEl.textContent = "백로그 서버에 닿지 않습니다.";
-    backlogMetaEl.textContent = e.message.startsWith("HTTP")
-        ? `응답 ${e.message}`
-        : "Mac mini 가 꺼져 있거나 이 기기에 Tailscale 이 연결돼 있지 않습니다.";
+    backlogMetaEl.innerHTML =
+        "Tailscale 연결 확인 → 그래도 안 되면 이 기기 DNS 가 MagicDNS 를 안 쓰는 상태입니다. " +
+        `<br>build ${BACKLOG_BUILD}`;
 }
 
-async function loadBacklogSummary() {
+/* 인증 없이 서버 생존만 확인한다. '못 닿음' 과 '비밀번호 문제' 를 갈라주는 역할. */
+async function backlogReachable() {
+    try {
+        await backlogFetch("health", false);
+        return true;
+    } catch (e) {
+        backlogError(e, { silent: true });
+        return false;
+    }
+}
+
+async function loadBacklogSummary(opts = {}) {
+    const silent = opts.silent === true;
     if (!backlogToken) {
         setBacklogState("locked");
         backlogSummaryEl.textContent = "비밀번호를 입력하면 백로그를 조회합니다.";
@@ -196,11 +239,13 @@ async function loadBacklogSummary() {
         return;
     }
     backlogSummaryEl.textContent = "조회 중…";
+    // 서버부터 확인 — 안 닿으면 토큰을 지우지 않는다(꺼져 있을 뿐인데 비번을 날리면 안 됨).
+    if (!(await backlogReachable())) return;
     try {
         renderBacklogSummary(await backlogFetch("summary"));
         setBacklogState("ready");
     } catch (e) {
-        backlogError(e);
+        backlogError(e, { silent });
     }
 }
 
@@ -222,7 +267,7 @@ async function unlockBacklog(event) {
     backlogToken = pw;
     if (backlogRememberInput.checked) localStorage.setItem(BACKLOG_TOKEN_KEY, pw);
     backlogPasswordInput.value = "";
-    await loadBacklogSummary();
+    await loadBacklogSummary({ silent: false });
 }
 
 function lockBacklog() {
@@ -235,8 +280,11 @@ function lockBacklog() {
 
 if (backlogSection) {
     backlogUnlockForm.addEventListener("submit", unlockBacklog);
-    backlogRefreshBtn.addEventListener("click", () => { backlogDetailEl.innerHTML = ""; loadBacklogSummary(); });
+    backlogRefreshBtn.addEventListener("click", () => {
+        backlogDetailEl.innerHTML = "";
+        loadBacklogSummary({ silent: false });   // 사람이 누른 것이므로 오류를 그대로 보여준다
+    });
     backlogLockBtn.addEventListener("click", lockBacklog);
     backlogDetailBtn.addEventListener("click", showBacklogDetail);
-    loadBacklogSummary();
+    loadBacklogSummary({ silent: true });   // 새로고침 시 비밀번호 오류를 띄우지 않는다
 }
