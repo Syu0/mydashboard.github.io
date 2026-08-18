@@ -526,3 +526,181 @@ li button {
                 justify-content: center;
                 gap: 8px;
 }
+
+/* ---------- Backlog widget ---------- */
+#backlogSection {
+                text-align: left;
+                font-size: 13px;
+}
+.backlog-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 10px;
+}
+.backlog-head .title {
+                font-size: 12px;
+                letter-spacing: 1.4px;
+                opacity: 0.75;
+}
+#backlogRefreshBtn {
+                background: none;
+                border: none;
+                color: whitesmoke;
+                opacity: 0.6;
+                cursor: pointer;
+                font-size: 15px;
+                padding: 0 2px;
+}
+#backlogRefreshBtn:hover { opacity: 1; }
+
+.backlog-summary {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-bottom: 12px;
+}
+.backlog-chip {
+                padding: 2px 9px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.16);
+                font-size: 12px;
+                font-variant-numeric: tabular-nums;
+}
+.backlog-chip.total { background: rgba(255, 255, 255, 0.08); opacity: 0.8; }
+
+.backlog-projects { list-style: none; padding: 0; margin: 0; }
+.backlog-project { margin-bottom: 11px; }
+.backlog-project-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 8px;
+}
+.backlog-project-name {
+                font-weight: 500;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+}
+.backlog-project-count {
+                font-variant-numeric: tabular-nums;
+                opacity: 0.65;
+                font-size: 12px;
+}
+.backlog-bar {
+                display: flex;
+                height: 4px;
+                border-radius: 3px;
+                overflow: hidden;
+                margin: 4px 0 3px;
+                background: rgba(255, 255, 255, 0.1);
+}
+.backlog-bar .seg { display: block; }
+.backlog-bar .seg.red { background: #ff6b6b; }
+.backlog-bar .seg.yellow { background: #ffd166; }
+.backlog-bar .seg.green { background: #7bdcb5; }
+
+.backlog-project-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                font-size: 11px;
+                opacity: 0.7;
+                font-variant-numeric: tabular-nums;
+}
+.backlog-project-meta .stale-high { color: #ff8f8f; opacity: 1; font-weight: 600; }
+.backlog-project-meta .stale-mid { color: #ffd166; opacity: 1; }
+.backlog-project-meta .dirty { color: #9fd0ff; }
+
+.backlog-unlock {
+                display: flex;
+                gap: 6px;
+                margin-top: 12px;
+}
+.backlog-unlock input {
+                flex: 1;
+                min-width: 0;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.22);
+                border-radius: 10px;
+                padding: 6px 10px;
+                color: whitesmoke;
+                font-size: 12px;
+}
+.backlog-unlock input::placeholder { color: rgba(245, 245, 245, 0.5); }
+.backlog-unlock button {
+                border-radius: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
+                cursor: pointer;
+}
+
+.backlog-auto-toggle {
+                margin: 12px 0 6px;
+                background: none;
+                border: none;
+                color: whitesmoke;
+                opacity: 0.55;
+                font-size: 11px;
+                cursor: pointer;
+                padding: 0;
+                text-decoration: underline;
+}
+.backlog-items { list-style: none; padding: 0; margin: 0; }
+.backlog-item {
+                display: flex;
+                gap: 7px;
+                padding: 7px 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.backlog-item.auto { display: none; }
+.backlog-items.show-auto .backlog-item.auto { display: flex; }
+.backlog-item-prio { flex: none; font-size: 11px; line-height: 1.5; }
+.backlog-item-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.backlog-item-title { font-size: 12px; line-height: 1.45; }
+.backlog-item-meta {
+                font-size: 10.5px;
+                opacity: 0.6;
+                font-variant-numeric: tabular-nums;
+}
+.backlog-item-meta .stale-high { color: #ff8f8f; opacity: 1; }
+.backlog-item-meta .stale-mid { color: #ffd166; opacity: 1; }
+
+.backlog-meta {
+                margin-top: 12px;
+                font-size: 10.5px;
+                opacity: 0.5;
+                font-variant-numeric: tabular-nums;
+}
+
+/* backlog widget — 라이브 조회 모드 추가분 */
+.backlog-actions { display: flex; align-items: center; gap: 6px; }
+.backlog-actions button {
+                background: none;
+                border: none;
+                color: whitesmoke;
+                opacity: 0.6;
+                cursor: pointer;
+                font-size: 12px;
+                padding: 0 2px;
+}
+.backlog-actions button:hover { opacity: 1; }
+#backlogDetailBtn {
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 8px;
+                padding: 2px 8px;
+                font-size: 11px;
+                opacity: 0.8;
+}
+.backlog-unlock { flex-wrap: wrap; }
+.backlog-remember {
+                flex-basis: 100%;
+                font-size: 11px;
+                opacity: 0.65;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                cursor: pointer;
+}
+.backlog-remember input { width: auto; margin: 0; }

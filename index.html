@@ -51,6 +51,28 @@
 
             <ul id=todos></ul>
         </div>
+        <div class="item" id="backlogSection">
+            <div class="backlog-head">
+                <span class="title">BACKLOG</span>
+                <span class="backlog-actions">
+                    <button type="button" id="backlogDetailBtn" class="hidden">자세히</button>
+                    <button type="button" id="backlogRefreshBtn" title="다시 조회">↻</button>
+                    <button type="button" id="backlogLockBtn" class="hidden" title="잠금">🔒</button>
+                </span>
+            </div>
+            <div id="backlogSummary" class="backlog-summary">불러오는 중…</div>
+            <ul id="backlogProjects" class="backlog-projects"></ul>
+            <form id="BacklogUnlockForm" class="backlog-unlock">
+                <input type="password" id="backlogPasswordInput" placeholder="비밀번호"
+                       autocomplete="off" required=true/>
+                <button type="submit" id="backlogUnlockBtn">조회</button>
+                <label class="backlog-remember">
+                    <input type="checkbox" id="backlogRememberInput" checked/> 이 브라우저에 기억
+                </label>
+            </form>
+            <div id="backlogDetail"></div>
+            <div id="backlogMeta" class="backlog-meta"></div>
+        </div>
     </div>
 
     <footer id="favoritesFooter">
@@ -85,6 +107,7 @@
     <script src="pinnedMemos.js"></script>
     <script src="memos.js"></script>
     <script src="favorites.js"></script>
+    <script src="backlog.js"></script>
     <script src="colors.js"></script>
 </body>
 </html>
