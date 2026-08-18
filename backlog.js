@@ -19,13 +19,19 @@
  *               (공개 DNS 로 해석하면 Funnel 인그레스로 가서 tailscaled 가 503 을 낸다).
  */
 const BACKLOG_ENDPOINTS = [
+    // 같은 origin. 대시보드를 Mac mini 가 직접 서빙할 때(/backlog/ui/) 쓰인다.
+    // Chrome 151 의 Local Network Access 는 '공개 origin → 사설 IP' 만 막으므로
+    // 같은 origin 이면 애초에 차단 대상이 아니다. 이게 유일하게 항상 통하는 경로다.
+    "/backlog",
+    // 아래 둘은 github.io 에서 열었을 때의 시도. Chrome 151+ 는
+    // ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS 로 막는다(사이트 권한 허용 시에만 통과).
     "http://127.0.0.1:8787/backlog",
     "https://bot-macmini.tail7c5820.ts.net:8443/backlog",
 ];
-let BACKLOG_API = localStorage.getItem("backlogApi") || BACKLOG_ENDPOINTS[0];
+let BACKLOG_API = BACKLOG_ENDPOINTS[0];
 const BACKLOG_TOKEN_KEY = "backlogToken";
 const BACKLOG_TIMEOUT = 8000;   // ms — 응답이 없으면 매달리지 않고 끊는다
-const BACKLOG_BUILD = "2026-08-18d";   // 화면에 찍어서 캐시된 구버전을 식별한다
+const BACKLOG_BUILD = "2026-08-18e";   // 화면에 찍어서 캐시된 구버전을 식별한다
 
 const backlogSection = document.querySelector("#backlogSection");
 const backlogSummaryEl = document.querySelector("#backlogSummary");
@@ -224,7 +230,9 @@ function backlogError(e, opts = {}) {
     // UNREACHABLE — DNS/연결/TLS/CORS 중 하나. 브라우저가 구분해주지 않는다.
     backlogSummaryEl.textContent = "백로그 서버에 닿지 않습니다.";
     backlogMetaEl.innerHTML =
-        "Tailscale 연결 확인 → 그래도 안 되면 이 기기 DNS 가 MagicDNS 를 안 쓰는 상태입니다. " +
+        "공개 주소에서는 Chrome 이 사설망 요청을 차단합니다. " +
+        '<a href="https://bot-macmini.tail7c5820.ts.net:8443/backlog/ui/" ' +
+        'style="color:#9fd0ff">Mac mini 주소로 열기</a>' +
         `<br>build ${BACKLOG_BUILD}`;
 }
 
@@ -238,7 +246,6 @@ async function backlogReachable() {
         BACKLOG_API = base;
         try {
             await backlogFetch("health", false);
-            localStorage.setItem("backlogApi", base);
             return true;
         } catch (e) {
             lastBacklogError = e;
